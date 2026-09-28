@@ -10,6 +10,7 @@ It installs on iPhone, Android, Windows and Mac straight from the browser. There
 | `index.html` | The whole app |
 | `manifest.webmanifest` | Tells phones and computers the app's name, icon and colours so it can be installed |
 | `sw.js` | Lets the app open and work with no internet |
+| `config.js` | Your settings. Put your GoatCounter code here to count installs (see below) |
 | `icons/` | App icons for every platform |
 | `fonts/` | The app's fonts, bundled so nothing loads from other sites |
 | `.nojekyll` | A blank file GitHub Pages likes. It's hidden on Mac, which is fine. |
@@ -46,14 +47,40 @@ Your Claude version and this app store data separately. To move it:
 1. In the Claude version, go to **Settings → Download backup**.
 2. In the installed app, go to **Settings → Restore from file** and pick that backup.
 
-## 4. Keep your data safe
+## 4. Count how many people use it (optional, free)
+
+The app can count **anonymous** numbers for you with GoatCounter, a free, cookie-free counter that doesn't need a consent banner.
+
+1. Go to **goatcounter.com** and sign up. Pick a code, for example `lifeos-vikas`. Your dashboard will be at `lifeos-vikas.goatcounter.com`.
+2. In your GitHub repository, open `config.js`, click the **pencil** (Edit), and put your code between the quotes:
+   `window.LIFEOS_ANALYTICS = 'lifeos-vikas';`
+3. Click **Commit changes**. Counting starts within a minute or two.
+
+What you'll see in the GoatCounter dashboard:
+
+| Name | What it counts |
+|---|---|
+| `/life-os/` (page views) | Every time someone opens the app or the link |
+| `new-visitor` | Each device that opens the link for the first time in a browser |
+| `install` | Each device that opens Life OS as an installed app for the first time. This is your **download count** |
+| `daily-active` | Installed apps opened that day (one per device per day) |
+| `tried-sample` | People who tapped "Try it with sample data" |
+| `started` | People who set up their own Life OS |
+
+Keep in mind:
+- Counts are per **device**, not per person. Someone with a phone and a laptop counts twice.
+- Ad blockers and some privacy browsers block counters, so real numbers are a bit higher.
+- On iPhone, the install is counted the first time the app is opened from the Home Screen.
+- Only these event names are sent, never anyone's habits, meals, weight or name.
+
+## 5. Keep your data safe
 
 Data lives only on the device you use it on. The app reminds you monthly to **save a backup file**. Keep those files somewhere safe, such as Google Drive or iCloud. If you get a new phone, install the app again and use **Restore from file**.
 
-## 5. Updating the app later
+## 6. Updating the app later
 
 1. Replace `index.html` (or any file) in your GitHub repository with the new version.
-2. Open `sw.js` and change `lifeos-v1` to `lifeos-v2` (then `v3` next time, and so on).
+2. Open `sw.js` and raise the number in `VERSION` by one (for example `lifeos-v3` → `lifeos-v4`).
 3. Commit. Phones pick up the new version the next time the app is opened. Sometimes it takes a second open.
 
 Nobody's data is touched by an update.
@@ -74,6 +101,6 @@ Costs and rules to plan for:
 
 ## Privacy, in one line
 
-Life OS collects nothing. There are no accounts, analytics or trackers, and all data stays on your device unless you export a backup yourself.
+There are no accounts, and all data stays on your device unless you export a backup yourself. If you switch on counting in `config.js`, the app sends anonymous event names (visit, install, daily open) to GoatCounter. It never sends anything anyone enters.
 
 Fonts: Unbounded, Manrope and JetBrains Mono, all under the SIL Open Font License (see `fonts/LICENSE.txt`).

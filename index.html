@@ -18,6 +18,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Life OS">
 <script>try{if(JSON.parse(localStorage.getItem('lifeos.mode'))==='minimal')document.documentElement.dataset.mode='minimal'}catch(e){}</script>
+<script src="config.js"></script>
+<script>
+(function () {
+  var c = String(window.LIFEOS_ANALYTICS || '').trim();
+  if (!/^[a-z0-9-]+$/i.test(c)) return;
+  var s = document.createElement('script');
+  s.async = true; s.src = 'https://gc.zgo.at/count.js';
+  s.setAttribute('data-goatcounter', 'https://' + c + '.goatcounter.com/count');
+  document.head.appendChild(s);
+})();
+</script>
 <link rel="preload" href="fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"Unbounded";src:url(fonts/unbounded.woff2) format("woff2");font-weight:200 900;font-display:swap}
@@ -645,6 +656,16 @@ const PWA = !!document.querySelector('link[rel="manifest"]');
 const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 let installPrompt = null;
+const COUNTING = () => PWA && /^[a-z0-9-]+$/i.test(String(window.LIFEOS_ANALYTICS || '').trim());
+// Anonymous counters for the app owner (GoatCounter). Only an event name is sent, never anyone's data.
+function track(name) {
+  if (!COUNTING()) return;
+  let tries = 0;
+  const t = setInterval(() => {
+    if (window.goatcounter && window.goatcounter.count) { clearInterval(t); try { window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* blocked */ } }
+    else if (++tries > 60) clearInterval(t);
+  }, 250);
+}
 function themeColor() {
   if (!MIN()) return '#06050D';
   const r = document.documentElement.dataset.theme;
@@ -1042,6 +1063,7 @@ function onboarding() {
 function banners(isToday) {
   if (!isToday) return '';
   let out = '';
+  if (PWA && IOS && !STANDALONE && !LS.get('lifeos.iosTip')) out += `<div class="banner"><span>On iPhone, <b>add Life OS to your Home Screen before you start</b>. What you enter here in Safari stays in Safari. Tap Share, then Add to Home Screen.</span><span class="actions"><button class="btn small primary" data-act="ios-tip-ok">Got it</button></span></div>`;
   if (cfg().sample) out += `<div class="banner"><span>You're looking at <b>sample data</b>. Explore, then start your own.</span><span class="actions"><button class="btn small primary" data-act="sample-clear">Start fresh</button></span></div>`;
   else if (S.mode === 'local' && Object.keys(S.months).length) {
     const lb = LS.get('lifeos.lastBackup'), snooze = LS.get('lifeos.backupSnooze');
@@ -1741,7 +1763,7 @@ function sheetHabits() {
 }
 
 function sheetSettings() {
-  const mode = S.mode === 'db' ? 'Synced to your Claude account. Open this page on your phone or laptop and it is all there.' : S.mode === 'local' ? 'Your data stays on this device and is never uploaded. Save a backup file now and then.' : 'Connecting…';
+  const mode = S.mode === 'db' ? 'Synced to your Claude account. Open this page on your phone or laptop and it is all there.' : S.mode === 'local' ? `Your data stays on this device and is never uploaded. Save a backup file now and then.${COUNTING() ? ' The app counts anonymous visits and installs so its maker knows how many people use it; none of your entries are included.' : ''}` : 'Connecting…';
   const nMonths = Object.keys(S.months).length;
   const lb = LS.get('lifeos.lastBackup');
   let install = '';
@@ -2007,6 +2029,7 @@ const A = {
   },
 
   'ob-create'() {
+    track('started');
     const name = ($('#ob-name').value || '').trim(), list = ($('#ob-habits').value || '').split('\n').map(s => s.trim()).filter(Boolean), ym = ymOf(today());
     writeConfig({ v: 1, name, handle: '', habits: list.map((n, i) => ({ id: 'h' + uid() + i, name: n, goal: dim(ym), color: HUES[i % HUES.length], from: ym, until: null, o: i })), mealTemplates: [], body: { unit: 'kg' }, createdAt: today() });
     if (!S.grocery) write('lists/grocery', { cats: Object.fromEntries(['Fruits & Veggies', 'Meat & Fish', 'Dairy', 'Breads & Cereals', 'Sauces & Spices', 'Snacks', 'Beverages', 'Others'].map((n, i) => ['c' + (i + 1), { name: n, o: i, items: {} }])) });
@@ -2032,6 +2055,7 @@ const A = {
       .then(() => { LS.set('lifeos.lastBackup', today()); toast('Backup saved'); render(); })
       .catch(e => { if (e && e.code !== 'declined') toast("Couldn't save the backup here"); });
   },
+  'ios-tip-ok'() { LS.set('lifeos.iosTip', today()); render(); },
   'backup-later'() { LS.set('lifeos.backupSnooze', addDays(today(), 7)); render(); },
   minimal() {
     const m = MIN() ? 'neon' : 'minimal';
@@ -2047,7 +2071,7 @@ const A = {
     installPrompt = null;
     renderSheet();
   },
-  sample() { loadSample(); toast('Sample data loaded. Tap around.'); },
+  sample() { loadSample(); track('tried-sample'); toast('Sample data loaded. Tap around.'); },
   'sample-clear'() { resetAll().then(() => toast('Cleared. Set up your own.')); },
   reset() { UI.confirmReset = true; renderSheet(); },
   'reset-no'() { UI.confirmReset = false; renderSheet(); },
@@ -2168,6 +2192,12 @@ const VIEWS = { today: vToday, habits: vHabits, meals: vMeals, body: vBody, wrap
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if (UI.sheet && UI.sheet.kind === 'settings') renderSheet(); });
   addEventListener('appinstalled', () => { installPrompt = null; toast('Installed. Life OS is now with your apps.'); });
   if (PWA && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => null);
+  if (PWA) {
+    // one count per device: first visit in a browser, first launch as an installed app, and one "active" per day
+    if (!STANDALONE && !LS.get('lifeos.countedVisit')) { LS.set('lifeos.countedVisit', t); track('new-visitor'); }
+    if (STANDALONE && !LS.get('lifeos.countedInstall')) { LS.set('lifeos.countedInstall', t); track('install'); }
+    if (STANDALONE && LS.get('lifeos.lastActive') !== t) { LS.set('lifeos.lastActive', t); track('daily-active'); }
+  }
   // standalone app: data lives on the device, so open it straight away
   if (!(window.claude && window.claude.use)) { goLocal(); return; }
   const cache = LS.get('lifeos.cache');
