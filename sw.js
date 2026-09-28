@@ -1,6 +1,6 @@
 /* Life OS service worker: makes the app open and work with no internet.
    When you change any app file, bump VERSION so phones pick up the new version. */
-const VERSION = 'lifeos-v1';
+const VERSION = 'lifeos-v2';
 const SHELL = [
   './',
   './index.html',

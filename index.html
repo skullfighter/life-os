@@ -397,7 +397,17 @@ table.hg{border-collapse:separate;border-spacing:0}
 .gcat{--c:var(--amber);padding:16px}
 .gcat h3{font-family:var(--f-display);font-size:14px;font-weight:600;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .gcat h3 span{font-family:var(--f-mono);font-size:11px;color:var(--tx-3);font-weight:500}
-.gitem{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px;border-radius:8px}
+.gitem{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;padding:4px;border-radius:8px}
+.shop{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--amber);text-decoration:none;opacity:.85}
+.shop:hover,.shop:focus-visible{opacity:1;background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.shop svg{width:16px;height:16px}
+svg.inline{width:15px;height:15px;vertical-align:-2px;color:var(--amber)}
+.shopsel{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 6px 0 13px;border:1px solid var(--line-2);border-radius:999px;background:var(--glass);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-3);cursor:pointer}
+.shopsel select{appearance:auto;background:transparent;border:0;color:var(--tx);font:700 13px var(--f-body);letter-spacing:0;text-transform:none;height:30px;outline:none;cursor:pointer;max-width:130px}
+.shopsel select option{color:#15161C;background:#FFFFFF}
+.shopsel:focus-within{border-color:var(--amber)}
+.shopcustom{margin-bottom:14px;--mc:var(--amber)}
+a.btn{text-decoration:none}
 .gitem:hover{background:var(--hover)}
 .gitem .tx{font-size:14px;overflow-wrap:anywhere}
 .gadd{height:34px;font-size:13.5px;margin-top:6px;width:100%}
@@ -611,6 +621,7 @@ const I = {
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 13h11l1-13M9 7V4h6v3"/></svg>',
   save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>',
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h3.5"/></svg>',
+  bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5h2.4l2.3 10.6a1.6 1.6 0 0 0 1.6 1.3h8.5a1.6 1.6 0 0 0 1.5-1.2l1.7-6.7H6"/><circle cx="9.6" cy="19.6" r="1.4"/><circle cx="17.2" cy="19.6" r="1.4"/></svg>',
   star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7Z"/></svg>'
 };
 // gradient ids must be unique per copy: the rail copy is display:none on phones
@@ -769,7 +780,48 @@ function carried(k) {
   return out;
 }
 
+/* ───────── shopping apps: each item links to that app's search ───────── */
+const SHOPS = {
+  blinkit: { name: 'Blinkit', home: 'https://blinkit.com/', q: 'https://blinkit.com/s/?q={q}' },
+  zepto: { name: 'Zepto', home: 'https://www.zepto.com/', q: 'https://www.zepto.com/search?query={q}' },
+  instamart: { name: 'Instamart', home: 'https://www.swiggy.com/instamart', q: 'https://www.swiggy.com/instamart/search?query={q}' },
+  bigbasket: { name: 'BigBasket', home: 'https://www.bigbasket.com/', q: 'https://www.bigbasket.com/ps/?q={q}' },
+  jiomart: { name: 'JioMart', home: 'https://www.jiomart.com/', q: 'https://www.jiomart.com/search/{q}' },
+  amazon: { name: 'Amazon', home: 'https://www.amazon.in/', q: 'https://www.amazon.in/s?k={q}' }
+};
+function shop() {
+  const id = cfg().shopApp || 'blinkit';
+  if (id === 'custom') {
+    const c = cfg().shopCustom || {};
+    if (c.url && /^https:\/\//.test(c.url) && c.url.includes('{item}')) {
+      let home = c.url; try { home = new URL(c.url.replace('{item}', 'x')).origin + '/'; } catch (e) { /* keep */ }
+      return { id, name: c.name || 'My shop', home, q: c.url.replace('{item}', '{q}') };
+    }
+    return { id, name: c.name || 'My shop', home: '', q: '' };
+  }
+  return { id, ...(SHOPS[id] || SHOPS.blinkit) };
+}
+const shopLink = item => { const s = shop(); return s.q ? s.q.replace('{q}', encodeURIComponent(item)) : ''; };
+
 /* ───────── persistence: optimistic local state + one write at a time per document ───────── */
+const overlay = {}; // path -> recent patches not yet seen in a server copy
+function reflects(data, patch) {
+  for (const k in patch) {
+    const v = patch[k], d = data ? data[k] : undefined;
+    if (isObj(v)) { if (!reflects(isObj(d) ? d : {}, v)) return false; }
+    else if (JSON.stringify(v ?? null) !== JSON.stringify(d ?? null)) return false;
+  }
+  return true;
+}
+function withLocal(path, data) {
+  const now = Date.now();
+  if (overlay[path]) {
+    overlay[path] = overlay[path].filter(o => now - o.t < 30000 && !reflects(data, o.patch));
+    overlay[path].forEach(o => { data = deepMerge(data, o.patch); });
+    if (!overlay[path].length) delete overlay[path];
+  }
+  return deepMerge(data, pending[path] || {});
+}
 function pathRef(path) {
   if (path === 'config/main') return ['config'];
   if (path === 'lists/grocery') return ['grocery'];
@@ -783,6 +835,7 @@ function write(path, patch) {
   clearMemo();
   if (S.mode === 'local') { saveLocalSoon(); render(); return; }
   pending[path] = deepMerge(pending[path] || {}, patch);
+  (overlay[path] = overlay[path] || []).push({ patch: clone(patch), t: Date.now() });
   setSync('saving');
   // before the first server snapshot lands, hold the change; settle() flushes it
   if (DB && S.mode === 'db') { clearTimeout(timers[path]); timers[path] = setTimeout(() => flush(path), 380); }
@@ -861,27 +914,38 @@ async function connect() {
     cacheSoon();
     render();
   };
-  db.doc('config/main').onSnapshot(s => {
-    exists['config/main'] = s.exists;
-    S.config = s.exists ? deepMerge(clone(s.data()), pending['config/main'] || {}) : (pending['config/main'] ? clone(getLocal('config/main')) : null);
-    got.c = true; settle();
-  }, onErr);
-  db.doc('lists/grocery').onSnapshot(s => {
-    exists['lists/grocery'] = s.exists;
-    S.grocery = s.exists ? deepMerge(clone(s.data()), pending['lists/grocery'] || {}) : (pending['lists/grocery'] ? clone(getLocal('lists/grocery')) : null);
-    got.g = true; settle();
-  }, onErr);
-  db.collection('months').onSnapshot(snap => {
-    const seen = {};
-    snap.docs.forEach(d => {
-      const p = 'months/' + d.id;
-      seen[d.id] = true;
-      exists[p] = true;
-      S.months[d.id] = deepMerge(clone(d.data()), pending[p] || {});
-    });
-    Object.keys(S.months).forEach(id => { if (!seen[id] && !pending['months/' + id] && !inflight['months/' + id]) { delete S.months[id]; exists['months/' + id] = false; } });
-    got.m = true; settle();
-  }, onErr);
+  db.doc('config/main').onSnapshot(s => { applyConfig(s); got.c = true; settle(); }, onErr);
+  db.doc('lists/grocery').onSnapshot(s => { applyGrocery(s); got.g = true; settle(); }, onErr);
+  db.collection('months').onSnapshot(snap => { applyMonths(snap); got.m = true; settle(); }, onErr);
+}
+function applyConfig(s) {
+  exists['config/main'] = s.exists;
+  S.config = s.exists ? withLocal('config/main', clone(s.data())) : (pending['config/main'] ? clone(getLocal('config/main')) : null);
+}
+function applyGrocery(s) {
+  exists['lists/grocery'] = s.exists;
+  S.grocery = s.exists ? withLocal('lists/grocery', clone(s.data())) : (pending['lists/grocery'] ? clone(getLocal('lists/grocery')) : null);
+}
+function applyMonths(snap) {
+  const seen = {};
+  snap.docs.forEach(d => {
+    const p = 'months/' + d.id;
+    seen[d.id] = true;
+    exists[p] = true;
+    S.months[d.id] = withLocal(p, clone(d.data()));
+  });
+  Object.keys(S.months).forEach(id => { if (!seen[id] && !pending['months/' + id] && !inflight['months/' + id] && !overlay['months/' + id]) { delete S.months[id]; exists['months/' + id] = false; } });
+}
+// Coming back to the app (switching from phone to laptop, say): fetch the latest instead of waiting for the next push.
+let lastPull = 0;
+async function pull() {
+  if (!DB || S.mode !== 'db' || Date.now() - lastPull < 3000) return;
+  lastPull = Date.now();
+  try {
+    const [c, g, m] = await Promise.all([DB.doc('config/main').get(), DB.doc('lists/grocery').get(), DB.collection('months').get()]);
+    applyConfig(c); applyGrocery(g); applyMonths(m);
+    clearMemo(); cacheSoon(); render();
+  } catch (e) { /* the live subscription keeps running */ }
 }
 function goLocal() {
   S.mode = 'local';
@@ -1226,11 +1290,23 @@ function groceryHTML() {
   const cats = Object.entries((S.grocery || {}).cats || {}).filter(([, c]) => c).map(([id, c]) => ({ id, ...c })).sort((a, b) => (a.o ?? 0) - (b.o ?? 0));
   const ticked = cats.reduce((a, c) => a + Object.values(c.items || {}).filter(i => i && i.d).length, 0);
   const left = cats.reduce((a, c) => a + Object.values(c.items || {}).filter(i => i && i.x && !i.d).length, 0);
-  return `<div class="sec-title"><h2>Grocery list <span class="faint mono" style="font-size:12px;font-weight:500">${left} to buy</span></h2><div class="actions">${ticked ? `<button class="btn small" data-act="g-clear">${I.trash} Clear ${ticked} bought</button>` : ''}</div></div>
+  const sp = shop(), custom = sp.id === 'custom', sc = cfg().shopCustom || {};
+  const opts = Object.entries(SHOPS).map(([id, v]) => `<option value="${id}" ${sp.id === id ? 'selected' : ''}>${v.name}</option>`).join('') + `<option value="custom" ${custom ? 'selected' : ''}>Other app…</option>`;
+  return `<div class="sec-title"><h2>Grocery list <span class="faint mono" style="font-size:12px;font-weight:500">${left} to buy</span></h2>
+    <div class="actions">
+      <label class="shopsel" for="shop-app"><span>Shop on</span><select id="shop-app" data-change="shop">${opts}</select></label>
+      ${sp.home ? `<a class="btn small primary" href="${esc(sp.home)}" target="_blank" rel="noopener">${I.bag} Open ${esc(sp.name)}</a>` : ''}
+      ${left ? `<button class="btn small" data-act="g-copy">${I.copy} Copy list</button>` : ''}
+      ${ticked ? `<button class="btn small" data-act="g-clear">${I.trash} Clear ${ticked} bought</button>` : ''}
+    </div></div>
+  ${custom ? `<div class="card shopcustom"><div class="formgrid"><div class="field"><label for="shop-name">App name</label><input class="inp" id="shop-name" value="${esc(sc.name || '')}" placeholder="DMart Ready" data-change="shop-name" maxlength="30"></div>
+    <div class="field"><label for="shop-url">Search link, with {item} where the product goes</label><input class="inp" id="shop-url" value="${esc(sc.url || '')}" placeholder="https://example.com/search?q={item}" data-change="shop-url" maxlength="300"></div></div>
+    <p class="faint" style="font-size:12.5px;margin:10px 2px 0">Search the app's website for anything, copy the address, and replace the search word with {item}.</p></div>` : ''}
+  ${left && sp.q ? `<p class="note" style="margin-top:-4px">Tap ${I.bag.replace('<svg ', '<svg class="inline" ')} next to an item to find it on ${esc(sp.name)}. Tick it once it's in your cart.</p>` : ''}
   <div class="groc">${cats.map(c => {
     const items = Object.entries(c.items || {}).filter(([, i]) => i && i.x).map(([id, i]) => ({ id, ...i })).sort((a, b) => (!!a.d - !!b.d) || ((a.o ?? 0) - (b.o ?? 0)));
     return `<div class="card gcat"><h3>${esc(c.name)} <span>${items.filter(i => !i.d).length || ''}</span></h3>
-      ${items.map(i => `<div class="gitem ${i.d ? 'done' : ''}"><button class="cb" style="--c:var(--amber)" id="gi-${c.id}-${i.id}" data-act="g-toggle" data-c="${c.id}" data-id="${i.id}" aria-pressed="${!!i.d}" aria-label="${esc(i.x)}">${I.check}</button><span class="tx">${esc(i.x)}</span><button class="x" data-act="g-del" data-c="${c.id}" data-id="${i.id}" aria-label="Remove ${esc(i.x)}">${I.x}</button></div>`).join('')}
+      ${items.map(i => `<div class="gitem ${i.d ? 'done' : ''}"><button class="cb" style="--c:var(--amber)" id="gi-${c.id}-${i.id}" data-act="g-toggle" data-c="${c.id}" data-id="${i.id}" aria-pressed="${!!i.d}" aria-label="${esc(i.x)}">${I.check}</button><span class="tx">${esc(i.x)}</span>${!i.d && shopLink(i.x) ? `<a class="shop" href="${esc(shopLink(i.x))}" target="_blank" rel="noopener" aria-label="Find ${esc(i.x)} on ${esc(shop().name)}" title="Find on ${esc(shop().name)}">${I.bag}</a>` : '<span></span>'}<button class="x" data-act="g-del" data-c="${c.id}" data-id="${i.id}" aria-label="Remove ${esc(i.x)}">${I.x}</button></div>`).join('')}
       <input class="inp gadd" id="ga-${c.id}" placeholder="+ Add item" data-enter="g-add" data-c="${c.id}" autocomplete="off" maxlength="80">
     </div>`;
   }).join('')}</div>`;
@@ -1880,6 +1956,13 @@ const A = {
     inp.value = '';
     write('lists/grocery', { cats: { [c]: { items: { [uid()]: { x, d: false, o: Date.now() } } } } });
   },
+  'g-copy'() {
+    const cats = Object.values((S.grocery || {}).cats || {}).filter(Boolean).sort((a, b) => (a.o ?? 0) - (b.o ?? 0));
+    const lines = cats.map(c => { const it = Object.values(c.items || {}).filter(i => i && i.x && !i.d).sort((a, b) => (a.o ?? 0) - (b.o ?? 0)).map(i => i.x); return it.length ? `${c.name}: ${it.join(', ')}` : ''; }).filter(Boolean);
+    const text = 'Grocery list\n' + lines.join('\n');
+    try { navigator.clipboard.writeText(text).then(() => toast('List copied. Paste it anywhere.'), () => toast("Couldn't copy here. Long-press the items to copy them.")); }
+    catch (e) { toast("Couldn't copy here. Long-press the items to copy them."); }
+  },
   'g-clear'() {
     const patch = { cats: {} };
     Object.entries(S.grocery.cats || {}).forEach(([c, cat]) => Object.entries((cat && cat.items) || {}).forEach(([id, it]) => { if (it && it.d) (patch.cats[c] = patch.cats[c] || { items: {} }).items[id] = null; }));
@@ -2005,6 +2088,13 @@ function saveSlot(items) {
 function focusSoon(sel) { setTimeout(() => { const el = $(sel); if (el) { el.focus(); if (el.setSelectionRange && el.value) el.setSelectionRange(el.value.length, el.value.length); } }, 30); }
 
 const CHANGE = {
+  shop(el) { writeConfig({ shopApp: el.value }); },
+  'shop-name'(el) { writeConfig({ shopCustom: { name: el.value.trim() } }); },
+  'shop-url'(el) {
+    const v = el.value.trim();
+    if (v && !(/^https:\/\//.test(v) && v.includes('{item}'))) { toast('Use a link that starts with https:// and has {item} where the product goes'); return; }
+    writeConfig({ shopCustom: { url: v } });
+  },
   goal(el) { const v = parseInt(el.value, 10); if (!(v >= 1)) { render(); return; } writeMonth(el.dataset.ym, { goals: { [el.dataset.h]: clamp(v, 1, dim(el.dataset.ym)) } }); },
   'h-name'(el) { const name = el.value.trim(); if (!name) { renderSheet(); return; } const hs = clone(cfg().habits || []); hs.find(h => h.id === el.dataset.h).name = name; writeConfig({ habits: hs }); },
   'h-goal'(el) { const v = parseInt(el.value, 10); if (!(v >= 1)) return; const hs = clone(cfg().habits || []); hs.find(h => h.id === el.dataset.h).goal = clamp(v, 1, 31); writeConfig({ habits: hs }); },
@@ -2048,10 +2138,17 @@ $('#restore-file').addEventListener('change', e => {
   r.readAsText(f);
 });
 addEventListener('hashchange', () => { const h = (location.hash || '').slice(1); if (VIEWS[h] && h !== UI.tab) { UI.tab = h; UI.scrolledGrid = false; render(); } });
+addEventListener('focus', () => pull());
+// device-only mode: keep two open tabs of the app in step
+addEventListener('storage', e => {
+  if (e.key !== 'lifeos.local' || S.mode !== 'local' || !e.newValue) return;
+  try { const L = JSON.parse(e.newValue); if (L) { S.config = L.config || null; S.months = L.months || {}; S.grocery = L.grocery || null; clearMemo(); render(); } } catch (err) { /* ignore */ }
+});
 let resizeT = null;
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { const ch = document.querySelector('[data-chart="weight"]'); if (ch) drawWeightChart(ch); }, 150); });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  pull();
   const t = today();
   if (UI.lastToday && UI.lastToday !== t) { if (UI.day === UI.lastToday) UI.day = t; UI.week = weekStartOf(t); UI.hm = ymOf(t); clearMemo(); render(); }
   UI.lastToday = t;
