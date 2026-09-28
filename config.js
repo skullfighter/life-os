@@ -7,4 +7,4 @@
 
    Only anonymous counts are sent (visits, installs, daily opens). Nobody's habits, meals,
    weight or name ever leave their device. */
-window.LIFEOS_ANALYTICS = '';
+window.LIFEOS_ANALYTICS = 'skullfighter';
