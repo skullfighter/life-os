@@ -7,4 +7,5 @@
 
    Only anonymous counts are sent (visits, installs, daily opens). Nobody's habits, meals,
    weight or name ever leave their device. */
-window.LIFEOS_ANALYTICS = '';
+window.LIFEOS_ANALYTICS = '<script data-goatcounter="https://skullfighter.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>';
