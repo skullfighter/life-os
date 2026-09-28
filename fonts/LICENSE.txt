@@ -1,0 +1,18 @@
+Fonts in this folder are licensed under the SIL Open Font License 1.1.
+
+== unbounded ==
+Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+== manrope ==
+Copyright 2019 The Manrope Project Authors (https://github.com/sharanda/manrope)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+== jetbrains-mono ==
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono) JetBrainsMono-Italic[wght].ttf: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+Full license text: https://openfontlicense.org
