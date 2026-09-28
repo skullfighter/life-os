@@ -614,7 +614,11 @@ const I = {
   star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7Z"/></svg>'
 };
 // gradient ids must be unique per copy: the rail copy is display:none on phones
-const LOGO = id => `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3CF0FF"/><stop offset=".55" stop-color="#A487FF"/><stop offset="1" stop-color="#FF4FB8"/></linearGradient></defs><path d="M24 3.5 41.8 13.75v20.5L24 44.5 6.2 34.25v-20.5Z" fill="rgba(164,135,255,.08)" stroke="url(#${id})" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 17l8 15 8-15" fill="none" stroke="url(#${id})" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// The brand mark (shared icon): a hexagon holding a 2x2 habit grid, three days done and one to go.
+const MARK_GRID = '<rect x="14" y="14" width="8.6" height="8.6" rx="2.2" fill="#3CF0FF"/><rect x="25.4" y="14" width="8.6" height="8.6" rx="2.2" fill="#A487FF"/><rect x="14" y="25.4" width="8.6" height="8.6" rx="2.2" fill="#FF4FB8"/><rect x="26.1" y="26.1" width="7.2" height="7.2" rx="1.8" fill="none" stroke="#A487FF" stroke-width="1.4"/>';
+// Inside the app the hexagon carries the person's own initial; with no name yet it shows the brand mark.
+const initial = () => { const n = (cfg().name || '').trim(); return n ? Array.from(n)[0].toUpperCase() : ''; };
+const LOGO = (id, letter) => `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3CF0FF"/><stop offset=".55" stop-color="#A487FF"/><stop offset="1" stop-color="#FF4FB8"/></linearGradient></defs><path d="M24 3.5 41.8 13.75v20.5L24 44.5 6.2 34.25v-20.5Z" fill="rgba(164,135,255,.08)" stroke="url(#${id})" stroke-width="2.2" stroke-linejoin="round"/>${letter ? `<text x="24" y="24.6" text-anchor="middle" dominant-baseline="central" font-family="Unbounded, 'Arial Black', sans-serif" font-weight="800" font-size="19" fill="url(#${id})">${esc(letter)}</text>` : MARK_GRID}</svg>`;
 
 const TABS = [
   { id: 'today', label: 'Today', c: '#A487FF', icon: I.today },
@@ -935,9 +939,9 @@ function navHTML(withSync) {
 }
 function renderChrome() {
   const lv = levelOf(totalXP());
-  $('#rail').innerHTML = `<div class="brand" title="Life OS">${LOGO("lgr")}</div>` + navHTML(true);
+  $('#rail').innerHTML = `<div class="brand" title="Life OS">${LOGO("lgr", initial())}</div>` + navHTML(true);
   $('#tabbar').innerHTML = navHTML(false);
-  $('#topbar').innerHTML = `<div class="brand">${LOGO("lgt")}</div><div class="name">${esc(cfg().name || 'Life')} <span class="faint">OS</span></div><div class="grow"></div>
+  $('#topbar').innerHTML = `<div class="brand">${LOGO("lgt", initial())}</div><div class="name">${esc(cfg().name || 'Life')} <span class="faint">OS</span></div><div class="grow"></div>
     <span class="lvl neon-only" title="${lv.xp} XP"><b>${lv.l}</b>${esc(lv.name)}</span>
     ${modeSwitch('tn-mode', false)}
     <span class="sync ${syncState}" data-sync="dot"><i></i></span>
